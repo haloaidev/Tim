@@ -1,0 +1,7 @@
+{
+  "name": "MotivaBOT Pro - AI Motivation Coach",
+  "description": "Your personal AI motivation coach, life strategist, and momentum driver with real-time AI coaching, historical figure wisdom channeling, goal tracking, and daily wellness analytics.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
