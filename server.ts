@@ -478,6 +478,122 @@ Return realistic milestones, estimated timeline in days, and an inspiring milest
   }
 });
 
+// 7. VOX AI Party Game - Prompt Generator Endpoint
+app.post("/api/vox-prompt", async (req, res) => {
+  const { category = "Movies", isMiniGame = false, modeName = "Standard", difficulty = "medium", round = 1 } = req.body || {};
+
+  if (!process.env.GEMINI_API_KEY) {
+    const fallbackList = [
+      "Jurassic Park", "Cyberpunk Samurai", "Space Station Landing",
+      "Baking a Cake", "Platypus", "Quantum Computer", "Skateboarding"
+    ];
+    const item = fallbackList[Math.floor(Math.random() * fallbackList.length)];
+    return res.json({ prompt: item, mode: modeName });
+  }
+
+  try {
+    const ai = getAI();
+    const promptText = isMiniGame
+      ? `You are VOX, an AI party host. Generate a single ${difficulty} charade prompt or emoji phrase for game mode "${modeName}". Category: ${category}. Keep it under 5 words.`
+      : `You are VOX. Generate a single ${difficulty} charade prompt for category: ${category}. Round ${round}. Keep it under 4 words.`;
+
+    const response = await generateContentWithFallback(ai, {
+      model: "gemini-2.5-flash",
+      contents: promptText,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            prompt: { type: Type.STRING, description: "The charade or riddle prompt" },
+          },
+          required: ["prompt"],
+        },
+      },
+    });
+
+    const parsed = JSON.parse(response.text || "{}");
+    return res.json({
+      prompt: parsed.prompt?.replace(/"/g, "") || "Cyberpunk Matrix",
+      mode: modeName,
+    });
+  } catch (err: any) {
+    console.warn("VOX prompt fallback triggered:", err?.message || err);
+    return res.json({
+      prompt: "Matrix Revolution",
+      mode: modeName,
+    });
+  }
+});
+
+// 8. VOX AI Party Game - Sarcastic AI Judgment Endpoint
+app.post("/api/vox-judgment", async (req, res) => {
+  const { currentPrompt = "Charade", wasGuessed = false, teamName = "Team Alpha", playerName = "Player" } = req.body || {};
+
+  if (!process.env.GEMINI_API_KEY) {
+    return res.json({
+      judgment: wasGuessed
+        ? `Impressive acting by ${playerName}! VOX awards bonus points to ${teamName}.`
+        : `Analysis complete for ${playerName}. Points awarded strictly for physical survival.`,
+    });
+  }
+
+  try {
+    const ai = getAI();
+    const promptText = wasGuessed
+      ? `A player named ${playerName} from ${teamName} just successfully acted out: "${currentPrompt}". Give a hilarious 1-sentence sarcastic commentary praising their performance.`
+      : `A player named ${playerName} from ${teamName} just failed to act out: "${currentPrompt}". Give a hilarious 1-sentence sarcastic judgment of their performance.`;
+
+    const response = await generateContentWithFallback(ai, {
+      model: "gemini-2.5-flash",
+      contents: promptText,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            judgment: { type: Type.STRING, description: "1-sentence sarcastic commentary" },
+          },
+          required: ["judgment"],
+        },
+      },
+    });
+
+    const parsed = JSON.parse(response.text || "{}");
+    return res.json({
+      judgment: parsed.judgment || "I've seen better acting in a CAPTCHA test.",
+    });
+  } catch (err: any) {
+    console.warn("VOX judgment fallback triggered:", err?.message || err);
+    return res.json({
+      judgment: "Analysis complete. Points awarded strictly for structural survival.",
+    });
+  }
+});
+
+// 9. Simple Username Auth Endpoint
+app.post("/api/auth/login", (req, res) => {
+  const { username } = req.body || {};
+  if (!username) {
+    return res.status(400).json({ error: "Username is required" });
+  }
+
+  const cleanUsername = username.trim().toLowerCase().replace(/^@/, "");
+  return res.json({
+    user: {
+      id: `usr_${Date.now()}`,
+      username: cleanUsername,
+      displayName: username.trim(),
+      avatarPreset: "⚡",
+      createdAt: new Date().toISOString(),
+      totalGames: 1,
+      totalWins: 1,
+      totalPoints: 100,
+    },
+    message: "Logged in successfully",
+  });
+});
+
 // ── VITE MIDDLEWARE SETUP ─────────────────────────────────────────────────────
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {

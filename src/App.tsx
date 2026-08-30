@@ -21,6 +21,8 @@ import { BadgesModule, BADGE_DEFS } from "./components/BadgesModule";
 import { ExportModule } from "./components/ExportModule";
 import { DailyQuoteModule } from "./components/DailyQuoteModule";
 import { UserProfileModule } from "./components/UserProfileModule";
+import { VoxGameModule } from "./components/VoxGameModule";
+import { dbManager } from "./utils/db";
 
 import {
   Home,
@@ -276,8 +278,9 @@ export default function App() {
   // Navigation Items
   const NAV_ITEMS = [
     { id: "today", label: "Today", icon: Home },
+    { id: "voxgame", label: "VOX AI Party", icon: Sparkles, badge: "NEW" },
     { id: "coach", label: "AI Coach", icon: Bot, badge: "AI" },
-    { id: "dailyquote", label: "Daily Quote", icon: Sparkles },
+    { id: "dailyquote", label: "Daily Quote", icon: Zap },
     { id: "goals", label: "Goals", icon: Target, count: goals.length },
     { id: "mood", label: "Habits & Mood", icon: Heart },
     { id: "wisdom", label: "Wisdom", icon: Compass },
@@ -526,6 +529,20 @@ export default function App() {
                 streak={streak}
                 onNavigate={handleNavigate}
                 onToggleGoal={handleToggleGoal}
+              />
+            )}
+
+            {activeTab === "voxgame" && (
+              <VoxGameModule
+                user={dbManager.getCurrentUser()}
+                onUserChange={(updatedUser) => {
+                  if (updatedUser) {
+                    setUser((prev) =>
+                      prev ? { ...prev, name: updatedUser.displayName, username: updatedUser.username } : prev
+                    );
+                  }
+                }}
+                onNavigateToTab={(tab) => handleNavigate(tab)}
               />
             )}
 
